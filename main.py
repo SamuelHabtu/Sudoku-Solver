@@ -95,16 +95,16 @@ def influence(positions):
     row = 0
     column = 0
     box = 0
+    print(f"positions: {positions}")
     for i in range(81):
         if 2**i & positions:
             column    += getColumn(i)
             row       += getRow(i)
             box       += getBox(i)
-    return row | column | box
+    return row #| column #| box
 
 def update(available, positions):
     return available & ~influence(positions)
-
 
 def solve(boards, index, start_pos = 0):
     '''
@@ -115,13 +115,12 @@ def solve(boards, index, start_pos = 0):
     returns: solved_bitboard
 
     '''
-
-    #2^(n^2) - 1where n is the number of rows, this bitboard would look like 1111...1
+    #2^(n^2) - 1 :where n is the number of rows, this bitboard would look like 1111...1
     available = 2**(len(boards)**2) - 1 
     positions = boards[index]
     #remove the positions we already know are filled
     for board in boards:
-        available -= board
+        available = available & ~board
     #account for the influence of the current 'queens'
     available =  update(available, positions)
     for i in range(start_pos, 81):
@@ -135,32 +134,39 @@ def solve(boards, index, start_pos = 0):
 
 def main():
 
+    test = [[0]*9 for i in range(9)]
+    test[8][8] = 1
     sudoku = Sudoku()
-    puzzles, solutions = loadData()
-    print("puzzle:")
-    sudoku.readPuzzle(puzzles[1])
+    sudoku.readPuzzle(test)
     sudoku.printPuzzle()
-    print("algorithm result:")
-    sudoku.update(solve(sudoku.state))
-    sudoku.printPuzzle()
-    print("actual solution:")
-    sudoku.readPuzzle(solutions[1])
-    sudoku.printPuzzle()
+    inf = influence(sudoku.state[0])
+    print(inf)
+    
 
 def test():
 
     sudoku = Sudoku()
     puzzles, solutions = loadData()
     sudoku.readPuzzle(puzzles[3])
-    for i in range(len(sudoku.state)):
+    result = [[0]*9]*9
+
+    for i in range(1):
         sol = solve(sudoku.state, i)
-        if(i == 3):     
-            for row in interpret(sol, i + 1):
-                print(row)
-            print()
-    print("Original Puzzle")
+        for row in interpret(sol, i + 1):
+            for j in range(len(row)):
+                if(row[j]):
+                    result[i][j] = row[j]
+
+    print("Puzzle:")
+    sudoku.printPuzzle()
+
+    print("Algo Result")
+    for row in result:
+        print(row)
+    
+    print("Real Solution")
     sudoku.readPuzzle(solutions[3])
     sudoku.printPuzzle()
-    
+
 if __name__ == "__main__":
     main()
