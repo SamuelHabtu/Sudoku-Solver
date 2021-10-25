@@ -14,7 +14,7 @@ class Sudoku(object):
             for j in range(len(puzzle[0])):
                 if puzzle[i][j]:
                     value = puzzle[i][j]
-                    self.state[value - 1] += 2**(i * 9 + j)
+                    self.state[value - 1] += 2**(80 - (i * 9 + j))
 
     def printPuzzle(self):
     	

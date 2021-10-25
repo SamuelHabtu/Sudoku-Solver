@@ -73,10 +73,9 @@ def getRow(position):
 
 def getColumn(position):
 
-    board = 2**81
     col_start = position % 9
-    board += 2**col_start
-    return board | board<<9 | board<<18 | board<<27 | board<<36 | board<<45 | board<<54 | board<<63 | board<<72
+    board = 2**col_start
+    return board | board<<9 | board<<18 | board<<27 | board<<36 | board<<45 | board<<54 | board<<63 | board<<72 
 
 def getBox(position):
 
@@ -87,8 +86,7 @@ def getBox(position):
     box_start = (position//3 * 3 )
     board = 2**box_start
     box_row = board | board<<1 | board<<2
-    board = (box_row | box_row<<9 | box_row<<18) & (2**81 - 1)
-    return box_row | box_row<<9 | box_row<<18
+    return (box_row | box_row<<9 | box_row<<18)
 
 def influence(positions):
 
@@ -101,7 +99,7 @@ def influence(positions):
             column    += getColumn(i)
             row       += getRow(i)
             box       += getBox(i)
-    return row #| column #| box
+    return (row | column | box) | 2**81
 
 def update(available, positions):
     return available & ~influence(positions)
@@ -135,12 +133,15 @@ def solve(boards, index, start_pos = 0):
 def main():
 
     test = [[0]*9 for i in range(9)]
-    test[8][8] = 1
+    test[0][0] = 1
+    test[3][3] = 1
+    test[6][6] = 1
+
     sudoku = Sudoku()
     sudoku.readPuzzle(test)
     sudoku.printPuzzle()
     inf = influence(sudoku.state[0])
-    print(inf)
+    print("influence ",inf)
     
 
 def test():
