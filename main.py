@@ -67,26 +67,59 @@ def interpret(state, value):
 
 def getRow(position):
 
-    row_start = (position // 9) * 9
-    board = 2**row_start
-    return board | board<<1 | board<<2 | board<<3 | board<<4 | board<<5 | board<<6 | board<<7 | board<<8  
+    row_start = (position // 9) * 9 #returns where the first column of the row will be
+    row = 2**(9) - 1 #this creates the binary number 11...1 with 9 ones representing a full row    
+    return row<<row_start
 
 def getColumn(position):
 
-    col_start = position % 9
-    board = 2**col_start
-    return board | board<<9 | board<<18 | board<<27 | board<<36 | board<<45 | board<<54 | board<<63 | board<<72 
+    shift = position % 9 #returns the column based on given position aka know how much to shift
+    col = 2**0 + 2**9 + 2**18 + 2**27 + 2**36 + 2**45 + 2**54 + 2**63 + 2**72
+    #technically I could get a small speed up here by just calculating this number and plugging it in
+    #^ this creates a binary number 10...10.. representing a full column
+
+    return col<<shift  
 
 def getBox(position):
+    line = 7
+    box = line| line<<9 | line<<18
+    #this turns our 'line': represented by 111 into: the box below
+    ''' 
+    11100000000
+    11100000000
+    11100000000
+    '''
+    #taking advantage of dictionary search's speed this is faster than finding starting 
+    #row and column for the box and then creating a box instead its just constant 9
+    #Nine box dictionaires
+    first =   dict({0:0,1:1,2:2, 9:9,10:10,11:11, 18:18,19:19,20:20})
+    second =  dict({3:0,4:1,5:2, 12:9,13:10,14:11, 21:18,22:19,23:20})
+    third =   dict({6:0,7:1,8:2, 15:9,16:10,17:11, 24:18,25:19,26:20})
+    fourth =  dict({27:0,28:1,29:2, 36:9,37:10,38:11, 45:18,46:19,47:20})
+    fifth =   dict({30:0,31:1,32:2, 39:9,40:10,41:11, 48:18,49:19,50:20})
+    sixth =   dict({33:0,34:1,35:2, 42:9,43:10,44:11, 51:18,52:19,53:20})
+    seventh = dict({54:0,55:1,56:2, 63:9,64:10,65:11, 72:18,73:19,74:20})
+    eighth =  dict({57:0,58:1,59:2, 66:9,67:10,68:11, 75:18,76:19,77:20})
+    ninth =  dict({60:0,61:1,62:2, 69:9,70:10,71:11, 78:18,79:19,80:20})
 
-    if position > 63 and position < 72:
-        position -= 9
-    if position >= 72:
-        position -= 18
-    box_start = (position//3 * 3 )
-    board = 2**box_start
-    box_row = board | board<<1 | board<<2
-    return (box_row | box_row<<9 | box_row<<18)
+    if(position in first):
+        return box
+    if(position in second):
+        return box<<3
+    if(position in third):
+        return box<<6
+    if(position in fourth):
+        return box<<27
+    if(position in fifth):
+        return box<<30
+    if(position in sixth):
+        return box<<33
+    if(position in seventh):
+        return box<<54
+    if(position in eighth):
+        return box<<57
+    if(position in ninth):
+        return box<<60
 
 def influence(positions):
 
@@ -120,11 +153,14 @@ def solve(boards, index, start_pos = 0):
     for board in boards:
         available = available & ~board
     #account for the influence of the current 'queens'
+    #note: the idea behind this method is that sudoku is basically
+    #n queens problem with 9 queens (except with modified influence since queens cant move in boxes)
     available =  update(available, positions)
     for i in range(start_pos, 81):
         if 2**i & available and 2**i:
             positions += 2**i
             available = update(available, positions)
+            #we can skip rest of row if we find a value since we know there CANNOT be another one
             i = i//9 * 9 + 9
     return positions
 
@@ -133,9 +169,9 @@ def solve(boards, index, start_pos = 0):
 def main():
 
     test = [[0]*9 for i in range(9)]
-    test[0][0] = 1
-    test[3][3] = 1
-    test[6][6] = 1
+    test[0][4] = 1
+    test[3][7] = 1
+    test[6][1] = 1
 
     sudoku = Sudoku()
     sudoku.readPuzzle(test)
