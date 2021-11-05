@@ -8,7 +8,7 @@ def loadData(file_name = "data/data.csv"):
     returns:
         puzzles and solutions
     '''
-    print(f"loading {file_name[5:-4]}")
+    print(f"loading puzzles from: {file_name[5:]}\n...")
     puzzles = []
     solutions = []
     with open(file_name) as data_file:
@@ -18,16 +18,17 @@ def loadData(file_name = "data/data.csv"):
             puzzle, solution = line.strip().split(',')
             puzzles.append(puzzle)
             solutions.append(solution)
+    print("Loading Complete")
     return prepData(puzzles), prepData(solutions)
-
+'''
+function has been put away since all it really did was add extra calculations just to
+be a minor convenience for me
 def reshape(array):
-    '''
     Function that turns a linear matrix into a square matrix
     param:
         array, the matrix were going to reshape
     returns:
         square matrix
-    '''
     size = int(len(array)**(1/2))
     matrix = []
     prev = 0
@@ -35,7 +36,7 @@ def reshape(array):
         matrix.append(array[prev: i])
         prev = i
     return matrix
-
+'''
 def prepData(sudokus):
     '''
     Function that goes through each index in an array
@@ -47,7 +48,7 @@ def prepData(sudokus):
     result = []
     for sudoku in sudokus:
         puzzle = [int(value) for value in sudoku]
-        result.append(reshape(puzzle))
+        result.append(puzzle)
     return result
 
 def interpret(state, value):
@@ -63,7 +64,19 @@ def interpret(state, value):
     for j in range(len(result)):
         if 2**j & state:
             result[j] = value
-    return reshape(result)
+    return result
+
+def getBitboards(boards):
+    '''
+    Function returns 9 bitboards representing the positions of each digit from a sudoku puzzle
+    '''
+    res = [0] * 9
+    for i in range(len(res)):
+        for index in boards[i]:
+            #can just add instead of using bitwise OR since its not possible for the numbers to overlap
+            res[i] += 2**(80 - index)
+    return res
+
 
 def getRow(position):
 
@@ -137,47 +150,44 @@ def influence(positions):
 def update(available, positions):
     return available & ~influence(positions)
 
-def solve(boards, index, start_pos = 0):
+def indices(arr, target):
+    #given a target number this function returns a list of the indices of instances of that number
+    #within a given array
+    return [i for i, value in enumerate(arr) if value == target]
+
+def solve(puzzle):
     '''
-    Function that returns an NQueens style problem using bitboards for a gaven number
+    Function that returns an NQueens style problem using bitboards for a given sudoku
     params:
-        boards: a list containing 9 bitboards that represent the positions of each number
-        index: the index that contains our target number
-    returns: solved_bitboard
+        puzzle: a sudoku puzzle in the form of a 81 length list
+    returns: solved puzzle
 
     '''
-    #2^(n^2) - 1 :where n is the number of rows, this bitboard would look like 1111...1
-    available = 2**(len(boards)**2) - 1 
-    positions = boards[index]
+    positions = puzzle
+    boards = []
+    
+    for i in range(9):
+        boards.append(indices(puzzle, i + 1))
+    print(f"Indices: {boards}")
+    boards = getBitboards(boards)
+    print(f"BOARDS:{boards}")
     #remove the positions we already know are filled
-    for board in boards:
-        available = available & ~board
-    #account for the influence of the current 'queens'
+    #account for the influence of the current 'queens' for each number
     #note: the idea behind this method is that sudoku is basically
-    #n queens problem with 9 queens (except with modified influence since queens cant move in boxes)
-    available =  update(available, positions)
-    for i in range(start_pos, 81):
-        if 2**i & available and 2**i:
-            positions += 2**i
-            available = update(available, positions)
-            #we can skip rest of row if we find a value since we know there CANNOT be another one
-            i = i//9 * 9 + 9
+    #n queens problem with 9 types of queens (except with modified influence since queens cant move in boxes)
+
     return positions
 
 
 
 def main():
 
-    test = [[0]*9 for i in range(9)]
-    test[0][4] = 1
-    test[3][7] = 1
-    test[6][1] = 1
-
+    puzzles, solutions = loadData()
+    test = puzzles[0]
     sudoku = Sudoku()
     sudoku.readPuzzle(test)
     sudoku.printPuzzle()
-    inf = influence(sudoku.state[0])
-    print("influence ",inf)
+    print(solve(sudoku.puzzle))
     
 
 def test():
@@ -185,22 +195,11 @@ def test():
     sudoku = Sudoku()
     puzzles, solutions = loadData()
     sudoku.readPuzzle(puzzles[3])
-    result = [[0]*9]*9
-
-    for i in range(1):
-        sol = solve(sudoku.state, i)
-        for row in interpret(sol, i + 1):
-            for j in range(len(row)):
-                if(row[j]):
-                    result[i][j] = row[j]
-
+    result = [0]*81
     print("Puzzle:")
     sudoku.printPuzzle()
-
     print("Algo Result")
-    for row in result:
-        print(row)
-    
+    #TODO: print statement for our algo result
     print("Real Solution")
     sudoku.readPuzzle(solutions[3])
     sudoku.printPuzzle()
