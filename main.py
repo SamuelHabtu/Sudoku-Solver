@@ -51,26 +51,37 @@ def prepData(sudokus):
         result.append(puzzle)
     return result
 
-def interpret(state, value):
+def bitScan(bitboard):
+    #given a bitboard returns the position of the least significant bit
+    return bitboard & -bitboard
+
+def getPositions(bitboard):
     '''
-    Function that given a bitboard that represents the state of a sudoku returns a list version of it
+    Function that given a bitboard that represents the state of a sudoku returns a list of the positions
+    of the bits
     params:
         state: a given bit_board
-        value: the value were placing in each valid location on that bitboard
     returns:
-        an nxn list containing the information from the bitboard
+        result: an array of the bit positions
     '''
-    result = [0] * 81
-    for j in range(len(result)):
-        if 2**j & state:
-            result[j] = value
+    result = []
+    #since an empty board would be exactly 2**81
+    while(bitboard < 2**81):
+        sig_bit = bitScan(bitboard)
+        result.append(sig_bit)
+        bitboard -= sig_bit
+    
     return result
+
+
 
 def getBitboards(boards):
     '''
     Function returns 9 bitboards representing the positions of each digit from a sudoku puzzle
     '''
-    res = [0] * 9
+    #start off each bitboard with 2^81 which is a binary number that consists of
+    #81 zeroes and 1 leading 1
+    res = [2**81] * 9
     for i in range(len(res)):
         for index in boards[i]:
             #can just add instead of using bitwise OR since its not possible for the numbers to overlap
@@ -134,18 +145,9 @@ def getBox(position):
     if(position in ninth):
         return box<<60
 
-def influence(positions):
-
-    row = 0
-    column = 0
-    box = 0
-    print(f"positions: {positions}")
-    for i in range(81):
-        if 2**i & positions:
-            column    += getColumn(i)
-            row       += getRow(i)
-            box       += getBox(i)
-    return (row | column | box) | 2**81
+def influence(position):
+    #given the position of a number on a sudoku board, returns it's influence in th form of a bitboard
+    return (getRow(position) | getColumn(position) | getBox(position)) | 2**81
 
 def update(available, positions):
     return available & ~influence(positions)
@@ -153,7 +155,7 @@ def update(available, positions):
 def indices(arr, target):
     #given a target number this function returns a list of the indices of instances of that number
     #within a given array
-    return [i for i, value in enumerate(arr) if value == target]
+    return [(80 - i) for i, value in enumerate(arr) if value == target]
 
 def solve(puzzle):
     '''
@@ -163,20 +165,28 @@ def solve(puzzle):
     returns: solved puzzle
 
     '''
-    positions = puzzle
+    positions = []
     boards = []
-    
+    influenced = [0]*9
+    available = [0]*9
     for i in range(9):
-        boards.append(indices(puzzle, i + 1))
-    print(f"Indices: {boards}")
-    boards = getBitboards(boards)
-    print(f"BOARDS:{boards}")
-    #remove the positions we already know are filled
+        positions.append(indices(puzzle, i + 1))
+    boards = getBitboards(positions)
+   
+   
     #account for the influence of the current 'queens' for each number
     #note: the idea behind this method is that sudoku is basically
     #n queens problem with 9 types of queens (except with modified influence since queens cant move in boxes)
-
-    return positions
+    for i in range(len(boards)):
+        for position in positions[i]:
+            influenced[i] = influenced[i] | influence(position)
+        available[i] = influenced[i] ^ ((2**81) - 1)
+    #remove the positions we already x`know are filled
+    print(influenced[0])
+    #in order to be available a position has to be not influenced   
+    print("av", available[0])
+    print("positions:",getPositions(available[0]))
+    return 
 
 
 
