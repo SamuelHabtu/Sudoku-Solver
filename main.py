@@ -1,4 +1,5 @@
 from sudoku import Sudoku
+import math
 
 def loadData(file_name = "data/data.csv"):
     '''
@@ -66,9 +67,10 @@ def getPositions(bitboard):
     '''
     result = []
     #since an empty board would be exactly 2**81
-    while(bitboard < 2**81):
+    while(bitboard > 2**81):
         sig_bit = bitScan(bitboard)
-        result.append(sig_bit)
+        print(f"Board:{bitboard}, sig_bit: {sig_bit}")
+        result.append(int(math.log(sig_bit, 2)))
         bitboard -= sig_bit
     
     return result
