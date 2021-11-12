@@ -1,4 +1,3 @@
-from sudoku import Sudoku
 import math
 
 def loadData(file_name = "data/data.csv"):
@@ -69,13 +68,9 @@ def getPositions(bitboard):
     #since an empty board would be exactly 2**81
     while(bitboard > 2**81):
         sig_bit = bitScan(bitboard)
-        print(f"Board:{bitboard}, sig_bit: {sig_bit}")
         result.append(int(math.log(sig_bit, 2)))
-        bitboard -= sig_bit
-    
+        bitboard -= sig_bit    
     return result
-
-
 
 def getBitboards(boards):
     '''
@@ -159,6 +154,11 @@ def indices(arr, target):
     #within a given array
     return [(80 - i) for i, value in enumerate(arr) if value == target]
 
+def printPuzzle(puzzle):
+    for i in range(0, 81, 9):
+        print(puzzle[i:i+9])
+    print()
+
 def solve(puzzle):
     '''
     Function that returns an NQueens style problem using bitboards for a given sudoku
@@ -174,47 +174,35 @@ def solve(puzzle):
     for i in range(9):
         positions.append(indices(puzzle, i + 1))
     boards = getBitboards(positions)
-   
-   
-    #account for the influence of the current 'queens' for each number
-    #note: the idea behind this method is that sudoku is basically
-    #n queens problem with 9 types of queens (except with modified influence since queens cant move in boxes)
+    #first account for positions that are already filled since we cant just overwrite our puzzle
+    filled_spots = 0
+    for i in range(len(positions)):
+        for position in positions[i]:
+            filled_spots += 2**position
+    #now account for the influence of the current 'queens' for each number
+    #note: the idea behind this method is that sudoku is how I personally try to solve sudoku puzzles
+    #I look at what spots are 'covered' by a number, sort of like the n-queens problem
+    #except theres 9 different queens that influence a different shape(square, row and col)
     for i in range(len(boards)):
         for position in positions[i]:
             influenced[i] = influenced[i] | influence(position)
-        available[i] = influenced[i] ^ ((2**81) - 1)
+        available[i] = (filled_spots | influenced[i]) ^ ((2**81) - 1)
     #remove the positions we already x`know are filled
-    print(influenced[0])
-    #in order to be available a position has to be not influenced   
-    print("av", available[0])
-    print("positions:",getPositions(available[0]))
-    return 
+    #in order to be available a position has to be not influenced
+
+    for i in range(len(influenced)):
+        print(f"positions where you can put {i + 1}'s: {getPositions(available[i])}")
+    return puzzle
 
 
 
 def main():
 
     puzzles, solutions = loadData()
-    test = puzzles[0]
-    sudoku = Sudoku()
-    sudoku.readPuzzle(test)
-    sudoku.printPuzzle()
-    print(solve(sudoku.puzzle))
-    
-
-def test():
-
-    sudoku = Sudoku()
-    puzzles, solutions = loadData()
-    sudoku.readPuzzle(puzzles[3])
-    result = [0]*81
-    print("Puzzle:")
-    sudoku.printPuzzle()
-    print("Algo Result")
-    #TODO: print statement for our algo result
-    print("Real Solution")
-    sudoku.readPuzzle(solutions[3])
-    sudoku.printPuzzle()
+    puzzle = puzzles[0]
+    solution = solve(puzzle)
+    printPuzzle(puzzle)
+    #printPuzzle(solution)    
 
 if __name__ == "__main__":
     main()
