@@ -187,7 +187,7 @@ def solve(puzzle):
         for position in positions[i]:
             influenced[i] = influenced[i] | influence(position)
         available[i] = (filled_spots | influenced[i]) ^ ((2**81) - 1)
-    #remove the positions we already x`know are filled
+    #remove the positions we already know are filled
     #in order to be available a position has to be not influenced
 
     for i in range(len(influenced)):
