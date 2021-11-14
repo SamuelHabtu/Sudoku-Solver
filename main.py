@@ -104,43 +104,18 @@ def getColumn(position):
 def getBox(position):
     line = 7
     box = line| line<<9 | line<<18
-    #this turns our 'line': represented by 111 into: the box below
+    #this turns our 'line': represented by 111 into: the 'box' below
     ''' 
-    11100000000
-    11100000000
-    11100000000
+    00000000111
+    00000000111
+    00000000111
     '''
-    #taking advantage of dictionary search's speed this is faster than finding starting 
-    #row and column for the box and then creating a box instead its just constant 9
-    #Nine box dictionaires
-    first =   dict({0:0,1:1,2:2, 9:9,10:10,11:11, 18:18,19:19,20:20})
-    second =  dict({3:0,4:1,5:2, 12:9,13:10,14:11, 21:18,22:19,23:20})
-    third =   dict({6:0,7:1,8:2, 15:9,16:10,17:11, 24:18,25:19,26:20})
-    fourth =  dict({27:0,28:1,29:2, 36:9,37:10,38:11, 45:18,46:19,47:20})
-    fifth =   dict({30:0,31:1,32:2, 39:9,40:10,41:11, 48:18,49:19,50:20})
-    sixth =   dict({33:0,34:1,35:2, 42:9,43:10,44:11, 51:18,52:19,53:20})
-    seventh = dict({54:0,55:1,56:2, 63:9,64:10,65:11, 72:18,73:19,74:20})
-    eighth =  dict({57:0,58:1,59:2, 66:9,67:10,68:11, 75:18,76:19,77:20})
-    ninth =  dict({60:0,61:1,62:2, 69:9,70:10,71:11, 78:18,79:19,80:20})
-
-    if(position in first):
-        return box
-    if(position in second):
-        return box<<3
-    if(position in third):
-        return box<<6
-    if(position in fourth):
-        return box<<27
-    if(position in fifth):
-        return box<<30
-    if(position in sixth):
-        return box<<33
-    if(position in seventh):
-        return box<<54
-    if(position in eighth):
-        return box<<57
-    if(position in ninth):
-        return box<<60
+    position = 2**position
+    #decided to just write out the shifts for the sake of simplicity
+    for shift in (0,3,6,27,30,33,54,57,60):
+        if(position & box<<shift):
+            return box
+        
 
 def influence(position):
     #given the position of a number on a sudoku board, returns it's influence in th form of a bitboard
@@ -154,25 +129,26 @@ def indices(arr, target):
     #within a given array
     return [(80 - i) for i, value in enumerate(arr) if value == target]
 
+def emptySpots(arr):
+    return [(80 - i) for i, value in enumerate(arr) if not value]
+
 def printPuzzle(puzzle):
     for i in range(0, 81, 9):
         print(puzzle[i:i+9])
     print()
 
-def solve(puzzle):
+def getAvailableSpots(positions):
     '''
-    Function that returns an NQueens style problem using bitboards for a given sudoku
+    Function figures out the available spots
+    on a sudoku puzzle for each number
     params:
         puzzle: a sudoku puzzle in the form of a 81 length list
-    returns: solved puzzle
-
+    returns:
+        available: an array that contains the bitboards for available positions
     '''
-    positions = []
     boards = []
     influenced = [0]*9
     available = [0]*9
-    for i in range(9):
-        positions.append(indices(puzzle, i + 1))
     boards = getBitboards(positions)
     #first account for positions that are already filled since we cant just overwrite our puzzle
     filled_spots = 0
@@ -189,12 +165,13 @@ def solve(puzzle):
         available[i] = (filled_spots | influenced[i]) ^ ((2**81) - 1)
     #remove the positions we already know are filled
     #in order to be available a position has to be not influenced
+    return available
 
-    for i in range(len(influenced)):
-        print(f"positions where you can put {i + 1}'s: {getPositions(available[i])}")
-    return puzzle
-
-
+def solve(puzzle):
+    positions = []
+    for i in range(9):
+        positions.append(indices(puzzle, i + 1))
+    return getAvailableSpots(positions)
 
 def main():
 
@@ -202,7 +179,10 @@ def main():
     puzzle = puzzles[0]
     solution = solve(puzzle)
     printPuzzle(puzzle)
-    #printPuzzle(solution)    
-
+    printPuzzle(solutions[0])
+    for i in range(len(solution)):
+        solution[i] = getPositions(solution[i])
+    for row in solution:
+        print(row)
 if __name__ == "__main__":
     main()
