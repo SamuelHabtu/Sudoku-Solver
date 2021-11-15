@@ -95,10 +95,10 @@ def getRow(position):
 def getColumn(position):
 
     shift = position % 9 #returns the column based on given position aka know how much to shift
-    col = 2**0 + 2**9 + 2**18 + 2**27 + 2**36 + 2**45 + 2**54 + 2**63 + 2**72
-    #technically I could get a small speed up here by just calculating this number and plugging it in
-    #^ this creates a binary number 10...10.. representing a full column
-
+    col = 0x1008040201008040201
+    #this hex constant is just 2**0 + 2**9 + 2**18 + 2**27 + 2**36 + 2**45 + 2**54 + 2**63 + 2**72
+    #which is the first column, then based on which column our position belongs to
+    #we shift our column to the appropiate column
     return col<<shift  
 
 def getBox(position):
@@ -155,7 +155,6 @@ def getAvailableSpots(positions):
     for i in range(len(positions)):
         for position in positions[i]:
             filled_spots += 2**position
-    #now account for the influence of the current 'queens' for each number
     #note: the idea behind this method is that sudoku is how I personally try to solve sudoku puzzles
     #I look at what spots are 'covered' by a number, sort of like the n-queens problem
     #except theres 9 different queens that influence a different shape(square, row and col)
@@ -167,22 +166,40 @@ def getAvailableSpots(positions):
     #in order to be available a position has to be not influenced
     return available
 
+def explore(puzzle, positions, available, empty):
+
+
+    for spot in empty:
+        for i in range(len(available)):
+            if(2**spot & available[i]):
+                temp_positions = positions.copy()   
+                temp_empty = empty.copy()
+                temp_positions[i].append(spot)
+                temp_empty.remove(spot)
+                return explore(puzzle, temp_positions, getAvailableSpots(temp_positions), temp_empty)
+    #finally we fill the puzzle back in
+    for i in range(len(positions)):
+        for position in positions[i]:
+            puzzle[position] = i + 1
+    return puzzle
+
 def solve(puzzle):
+
     positions = []
     for i in range(9):
         positions.append(indices(puzzle, i + 1))
-    return getAvailableSpots(positions)
+    available = getAvailableSpots(positions)
+    puzzle = explore(puzzle, positions, available, emptySpots(puzzle))
+    return puzzle
 
 def main():
 
     puzzles, solutions = loadData()
-    puzzle = puzzles[0]
+    puzzle = puzzles[0].copy()
     solution = solve(puzzle)
-    printPuzzle(puzzle)
+    printPuzzle(puzzles[0])
     printPuzzle(solutions[0])
-    for i in range(len(solution)):
-        solution[i] = getPositions(solution[i])
-    for row in solution:
-        print(row)
+    printPuzzle(solution)
+
 if __name__ == "__main__":
     main()
