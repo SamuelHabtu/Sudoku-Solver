@@ -78,12 +78,12 @@ def getBitboards(boards):
     '''
     #start off each bitboard with 2^81 which is a binary number that consists of
     #81 zeroes and 1 leading 1
-    res = [2**81] * 9
-    for i in range(len(res)):
+    positions = [2**81] * 9
+    for i in range(len(positions)):
         for index in boards[i]:
             #can just add instead of using bitwise OR since its not possible for the numbers to overlap
-            res[i] += 2**(80 - index)
-    return res
+            positions[i] += 2**(80 - index)
+    return positions
 
 
 def getRow(position):
@@ -114,9 +114,8 @@ def getBox(position):
     #decided to just write out the shifts for the sake of simplicity
     for shift in (0,3,6,27,30,33,54,57,60):
         if(position & box<<shift):
-            return box
+            return box<<shift
         
-
 def influence(position):
     #given the position of a number on a sudoku board, returns it's influence in th form of a bitboard
     return (getRow(position) | getColumn(position) | getBox(position)) | 2**81
@@ -166,30 +165,59 @@ def getAvailableSpots(positions):
     #in order to be available a position has to be not influenced
     return available
 
-def explore(puzzle, positions, available, empty):
-
-
-    for spot in empty:
+def getOptions(available, empty):
+    
+    options = dict({})
+    #convert the bitboards into lists for convenience
+    for position in empty:
+        #for every new positions we must first put in an empty list for all of its possible digits
+        if(position not in options):
+            options[position] = []
         for i in range(len(available)):
-            if(2**spot & available[i]):
-                temp_positions = positions.copy()   
-                temp_empty = empty.copy()
-                temp_positions[i].append(spot)
-                temp_empty.remove(spot)
-                return explore(puzzle, temp_positions, getAvailableSpots(temp_positions), temp_empty)
-    #finally we fill the puzzle back in
-    for i in range(len(positions)):
-        for position in positions[i]:
-            puzzle[position] = i + 1
-    return puzzle
+            if(2**position & available[i]):
+                options[position].append(i + 1)
+    return options 
+
+def select(spot, options):
+    #no more options? must be done the puzzle or reached deadend
+    if(not options[spot]):
+        return 0, options
+    choice = options[spot][0]
+    if(len(options[spot]) > 1):
+        options[spot] = options[spot][1:]
+    else:
+        options[spot] = []
+    
+    lost_choices = set(getPositions(influence(choice)))
+    for position in lost_choices:
+        if position in options:
+            if(choice in options[position]):
+                options[position].remove(choice)
+    return choice, options
+    
+    
+    
+
+def exactCover(puzzle, empty, options):
+    for i in range(len(empty)):
+        choice, options = select(empty[i], options.copy())
+        empty[i] = choice
+    return empty
 
 def solve(puzzle):
-
     positions = []
     for i in range(9):
         positions.append(indices(puzzle, i + 1))
     available = getAvailableSpots(positions)
-    puzzle = explore(puzzle, positions, available, emptySpots(puzzle))
+    empty = emptySpots(puzzle)
+    #options will become a dictionary with the empty spots as keys and 
+    #all the digits with that as an available value
+    options = getOptions(available, empty)
+    choices = exactCover(puzzle, empty.copy(), options)
+    print(choices)
+    print(empty)
+    for i in range(len(empty)):
+        puzzle[empty[i]] = choices[i]  
     return puzzle
 
 def main():
@@ -200,6 +228,5 @@ def main():
     printPuzzle(puzzles[0])
     printPuzzle(solutions[0])
     printPuzzle(solution)
-
 if __name__ == "__main__":
     main()
