@@ -197,7 +197,6 @@ def simplify(options, available):
         #update options by finding out what is now available
         for spot in filled:
             available[filled[spot] - 1] = available[filled[spot] - 1] & ~influence(spot)
-        print(options)
         if(options):
             options = getOptions(available, options.keys())
             #update prev
@@ -223,16 +222,20 @@ def main():
     choice = input("Enter 1 for the sample cases or 2 to enter your own puzzle:")
     if(choice == "2"):
         print("starting from the top-left and going right enter each digit seperated by spaces")
-        print("e.g: 0 2 0 0 4 0 0 0 0 0 8 0 0 0 0 7 0 0 7 0 4 6 0 0 0 0 1 3 0 9 0 8 0 1 0 0 0 0 0 0 0 5 0 0 6 0 7 0 0 0 0 0 0 0 0 0 2 0 0 0 0 0 0 4 0 1 0 9 0 3 0 0 0 0 0 8 0 0 0 9 0")
+        print("e.g: 3 0 7 0 1 0 0 2 0 4 0 5 0 0 3 0 0 0 0 8 2 5 0 9 0 4 3 0 0 0 0 7 8 1 0 0 0 0 1 2 0 6 5 0 0 7 2 9 4 0 0 0 0 0 0 0 0 0 8 2 0 3 1 0 4 0 0 3 0 9 6 7 0 0 3 6 0 0 0 0 0")
         user_input = input(f"Enter your Puzzle: ")
         #using list comprehension to quickly convert the goods :O
         puzzle = [int(value) for value in user_input.split()]
+        print("")
         printPuzzle(puzzle)
         start_time = time.clock()
         solution = solve(puzzle.copy())
         end_time = time.clock()
-        print(f"it took {(end_time - start_time) * 1000}ms")
         printPuzzle(solution)
+        print(f"it took {(end_time - start_time) * 1000}ms")
+        if(solution == puzzle):
+            print("There were no blank spots with 1 clear choice so its too hard :(")
+        
     if(choice == "1"):
         test()
 def test():
@@ -249,7 +252,7 @@ def test():
         printPuzzle(solution)
         print(f"it took {times[i]}ms to solve this puzzle")
         print(["Solution is incorrect","Solution is correct"][solution == solutions[i]])
-
+    print(f"average time to complete each puzzle: {sum(times)/len(times)}")
 
 if __name__ == "__main__":
     main()
