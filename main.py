@@ -177,33 +177,30 @@ def getOptions(available, empty):
             if(2**position & available[i]):
                 options[position].append(i + 1)
     return options 
-
-def select(spot, options):
-    #no more options? must be done the puzzle or reached deadend
-    if(not options[spot]):
-        return 0, options
-    choice = options[spot][0]
-    if(len(options[spot]) > 1):
-        options[spot] = options[spot][1:]
-    else:
-        options[spot] = []
     
-    lost_choices = set(getPositions(influence(choice)))
-    for position in lost_choices:
-        if position in options:
-            if(choice in options[position]):
-                options[position].remove(choice)
-    return choice, options
-    
-    
-    
-
-def exactCover(puzzle, empty, options):
-    for i in range(len(empty)):
-        choice, options = select(empty[i], options.copy())
-        empty[i] = choice
-    return empty
-
+def simplify(options, available):
+    filled = dict({})
+    #function that goes through the options and for each spot where there is only 1 choice it does it
+    prev = options.copy()
+    while(options):
+        for spot in options:
+            if(len(options[spot]) == 1):
+                filled[spot] = options[spot][0]
+        #delete every spot we've filled
+        for spot in filled:
+            if(spot in options):
+                del options[spot]
+        #if we did not change options at all then we've either solved the puzzle or gotten stuck
+        if(options == prev):
+            options = 0
+        #update options by finding out what is now available
+        for spot in filled:
+            available[filled[spot] - 1] = available[filled[spot] - 1] & ~influence(spot)
+        options = getOptions(available, options.keys())
+        #update prev
+        prev = options.copy()
+    return filled
+        
 def solve(puzzle):
     positions = []
     for i in range(9):
@@ -213,20 +210,22 @@ def solve(puzzle):
     #options will become a dictionary with the empty spots as keys and 
     #all the digits with that as an available value
     options = getOptions(available, empty)
-    choices = exactCover(puzzle, empty.copy(), options)
-    print(choices)
-    print(empty)
-    for i in range(len(empty)):
-        puzzle[empty[i]] = choices[i]  
+    simplified = simplify(options, available)
+    for position in simplified:
+        puzzle[80 - position] = simplified[position]
     return puzzle
 
 def main():
 
     puzzles, solutions = loadData()
     puzzle = puzzles[0].copy()
-    solution = solve(puzzle)
-    printPuzzle(puzzles[0])
-    printPuzzle(solutions[0])
+    solution = solve(puzzle.copy())
+    print("Puzzle:")
+    printPuzzle(puzzle)
+    print("Simplified:")
     printPuzzle(solution)
+    print("Actual Solution:")
+    printPuzzle(solutions[0])
+
 if __name__ == "__main__":
     main()
