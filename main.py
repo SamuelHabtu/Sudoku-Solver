@@ -1,4 +1,5 @@
 import math
+import time
 
 def loadData(file_name = "data/data.csv"):
     '''
@@ -218,14 +219,16 @@ def solve(puzzle):
 def main():
 
     puzzles, solutions = loadData()
-    puzzle = puzzles[0].copy()
-    solution = solve(puzzle.copy())
+    puzzle      = puzzles[0].copy()
+    start_time  = time.clock()
+    solution    = solve(puzzle.copy())
+    end_time    = time.clock()
     print("Puzzle:")
     printPuzzle(puzzle)
-    print("Simplified:")
+    print("Solution:")
     printPuzzle(solution)
-    print("Actual Solution:")
-    printPuzzle(solutions[0])
+    print(f"it took {(end_time - start_time) * 1000}ms to solve this puzzle")
+    print(["Solution is incorrect","Solution is correct"][solution == solutions[0]])
 
 if __name__ == "__main__":
     main()
