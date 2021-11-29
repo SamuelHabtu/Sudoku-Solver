@@ -228,13 +228,13 @@ def main():
         puzzle = [int(value) for value in user_input.split()]
         print("")
         printPuzzle(puzzle)
-        start_time = time.clock()
+        start_time = time.perf_counter()
         solution = solve(puzzle.copy())
-        end_time = time.clock()
+        end_time = time.perf_counter()
         printPuzzle(solution)
-        print(f"it took {(end_time - start_time) * 1000}ms")
-        if(solution == puzzle):
-            print("There were no blank spots with 1 clear choice so its too hard :(")
+        print(f"it took {round( (end_time - start_time) * 1000)} ms")
+        if(0 in solution):
+            print("Could not completely solve this puzzle, did as many logical moves as possible")
         
     if(choice == "1"):
         test()
@@ -244,15 +244,16 @@ def test():
     times = []
     for i in range(len(puzzles)):
         puzzle = puzzles[i].copy()
-        start_time = time.clock()
+        start_time = time.perf_counter()
         solution = solve(puzzle.copy())
-        end_time   = time.clock()
-        times.append((end_time - start_time) * 1000)
+        end_time   = time.perf_counter()
+        times.append(round( (end_time - start_time) * 1000))
         printPuzzle(puzzle)
         printPuzzle(solution)
-        print(f"it took {times[i]}ms to solve this puzzle")
+        print(f"it took {times[i]} ms to solve this puzzle")
         print(["Solution is incorrect","Solution is correct"][solution == solutions[i]])
-    print(f"average time to complete each puzzle: {sum(times)/len(times)}")
+    print(f"average time to complete each puzzle: {sum(times)/len(times)} ms")
 
 if __name__ == "__main__":
     main()
+    
