@@ -193,7 +193,7 @@ def simplify(options, available):
                 del options[spot]
         #if we did not change options at all then we've either solved the puzzle or gotten stuck
         if(options == prev):
-            options = 0
+            return filled, options, available
         #update options by finding out what is now available
         for spot in filled:
             available[filled[spot] - 1] = available[filled[spot] - 1] & ~influence(spot)
@@ -201,8 +201,12 @@ def simplify(options, available):
             options = getOptions(available, options.keys())
             #update prev
             prev = options.copy()
-    return filled
-        
+    return filled,options,available
+
+def backtrack(options, available):
+ 
+    return options
+
 def solve(puzzle):
     positions = []
     for i in range(9):
@@ -212,9 +216,15 @@ def solve(puzzle):
     #options will become a dictionary with the empty spots as keys and 
     #all the digits with that as an available value
     options = getOptions(available, empty)
-    simplified = simplify(options, available)
+    simplified, options, available = simplify(options, available)
     for position in simplified:
         puzzle[80 - position] = simplified[position]
+    #if options is empty we know that we've either solved the puzzle or the puzzle is unsolvable
+    #either way just return no need to do more
+    if(not options):
+        return puzzle
+    #otherwise looks like we need to do more work :(
+    #time to backtrack :(
     return puzzle
 
 def main():
@@ -238,10 +248,12 @@ def main():
         
     if(choice == "1"):
         test()
+        
 def test():
     #if user does not want provide input we test every single puzzle we have in data.csv
     puzzles, solutions = loadData()
     times = []
+
     for i in range(len(puzzles)):
         puzzle = puzzles[i].copy()
         start_time = time.perf_counter()
@@ -251,7 +263,7 @@ def test():
         printPuzzle(puzzle)
         printPuzzle(solution)
         print(f"it took {times[i]} ms to solve this puzzle")
-        print(["Solution is incorrect","Solution is correct"][solution == solutions[i]])
+        print(["Solution is incorrect!","Solution is correct"][solution == solutions[i]])
     print(f"average time to complete each puzzle: {sum(times)/len(times)} ms")
 
 if __name__ == "__main__":
