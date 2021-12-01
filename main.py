@@ -224,7 +224,7 @@ def solve(puzzle):
     if(not options):
         return puzzle
     #otherwise looks like we need to do more work :(
-    #time to backtrack :(
+    
     return puzzle
 
 def main():
@@ -253,7 +253,7 @@ def test():
     #if user does not want provide input we test every single puzzle we have in data.csv
     puzzles, solutions = loadData()
     times = []
-
+    incorrect = []
     for i in range(len(puzzles)):
         puzzle = puzzles[i].copy()
         start_time = time.perf_counter()
@@ -262,9 +262,15 @@ def test():
         times.append(round( (end_time - start_time) * 1000))
         printPuzzle(puzzle)
         printPuzzle(solution)
-        print(f"it took {times[i]} ms to solve this puzzle")
-        print(["Solution is incorrect!","Solution is correct"][solution == solutions[i]])
+        print(f"it took {times[i]} ms to solve puzzle #{i + 1}")
+        #commenting the above 3 lines out since our sample base is over 1 million puzzles
+        if(solution != solutions[i]):
+            incorrect.append(solution)
     print(f"average time to complete each puzzle: {sum(times)/len(times)} ms")
+    print(f"out of the {len(puzzles)} sudokus solved {len(incorrect)} were not solved")
+    for solution in incorrect:
+        print("\nthis solution is incorrect or incomplete")
+        printPuzzle(solution)
 
 if __name__ == "__main__":
     main()
