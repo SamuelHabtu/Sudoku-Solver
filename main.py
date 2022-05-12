@@ -1,4 +1,5 @@
 import math
+import time
 
 '''
 /***********************************************************************************************
@@ -141,9 +142,8 @@ def getBox(position):
     #decided to just write out the shifts for the sake of simplicity
     for shift in (0,3,6,27,30,33,54,57,60):
         if(position & box<<shift):
-            return box
+            return box<<shift
         
-
 def influence(position):
     #given the position of a number on a sudoku board, returns it's influence in th form of a bitboard
     return (getRow(position) | getColumn(position) | getBox(position)) | 2**81
@@ -193,40 +193,112 @@ def getAvailableSpots(positions):
     #in order to be available a position has to be not influenced
     return available
 
-def explore(puzzle, positions, available, empty):
-
-
-    for spot in empty:
+def getOptions(available, empty):
+    
+    options = dict({})
+    #convert the bitboards into lists for convenience
+    for position in empty:
+        #for every new positions we must first put in an empty list for all of its possible digits
+        if(position not in options):
+            options[position] = []
         for i in range(len(available)):
-            if(2**spot & available[i]):
-                temp_positions = positions.copy()   
-                temp_empty = empty.copy()
-                temp_positions[i].append(spot)
-                temp_empty.remove(spot)
-                return explore(puzzle, temp_positions, getAvailableSpots(temp_positions), temp_empty)
-    #finally we fill the puzzle back in
-    for i in range(len(positions)):
-        for position in positions[i]:
-            puzzle[position] = i + 1
-    return puzzle
+            if(2**position & available[i]):
+                options[position].append(i + 1)
+    return options 
+    
+def simplify(options, available):
+    filled = dict({})
+    #function that goes through the options and for each spot where there is only 1 choice it does it
+    prev = options.copy()
+    while(options):
+        for spot in options:
+            if(len(options[spot]) == 1):
+                filled[spot] = options[spot][0]
+        #delete every spot we've filled
+        for spot in filled:
+            if(spot in options):
+                del options[spot]
+        #if we did not change options at all then we've either solved the puzzle or gotten stuck
+        if(options == prev):
+            return filled, options, available
+        #update options by finding out what is now available
+        for spot in filled:
+            available[filled[spot] - 1] = available[filled[spot] - 1] & ~influence(spot)
+        if(options):
+            options = getOptions(available, options.keys())
+            #update prev
+            prev = options.copy()
+    return filled,options,available
+
+def backtrack(options, available):
+ 
+    return options
 
 def solve(puzzle):
-
     positions = []
     for i in range(9):
         positions.append(indices(puzzle, i + 1))
     available = getAvailableSpots(positions)
-    puzzle = explore(puzzle, positions, available, emptySpots(puzzle))
+    empty = emptySpots(puzzle)
+    #options will become a dictionary with the empty spots as keys and 
+    #all the digits with that as an available value
+    options = getOptions(available, empty)
+    simplified, options, available = simplify(options, available)
+    for position in simplified:
+        puzzle[80 - position] = simplified[position]
+    #if options is empty we know that we've either solved the puzzle or the puzzle is unsolvable
+    #either way just return no need to do more
+    if(not options):
+        return puzzle
+    #otherwise looks like we need to do more work :(
+    
     return puzzle
 
 def main():
-
+    print("Welcome to sudoku solver")
+    choice = input("Enter 1 for the sample cases or 2 to enter your own puzzle:")
+    if(choice == "2"):
+        print("starting from the top-left and going right enter each digit seperated by spaces")
+        print("e.g: 3 0 7 0 1 0 0 2 0 4 0 5 0 0 3 0 0 0 0 8 2 5 0 9 0 4 3 0 0 0 0 7 8 1 0 0 0 0 1 2 0 6 5 0 0 7 2 9 4 0 0 0 0 0 0 0 0 0 8 2 0 3 1 0 4 0 0 3 0 9 6 7 0 0 3 6 0 0 0 0 0")
+        user_input = input(f"Enter your Puzzle: ")
+        #using list comprehension to quickly convert the goods :O
+        puzzle = [int(value) for value in user_input.split()]
+        print("")
+        printPuzzle(puzzle)
+        start_time = time.perf_counter()
+        solution = solve(puzzle.copy())
+        end_time = time.perf_counter()
+        printPuzzle(solution)
+        print(f"it took {round( (end_time - start_time) * 1000)} ms")
+        if(0 in solution):
+            print("Could not completely solve this puzzle, did as many logical moves as possible")
+        
+    if(choice == "1"):
+        test()
+        
+def test():
+    #if user does not want provide input we test every single puzzle we have in data.csv
     puzzles, solutions = loadData()
-    puzzle = puzzles[0].copy()
-    solution = solve(puzzle)
-    printPuzzle(puzzles[0])
-    printPuzzle(solutions[0])
-    printPuzzle(solution)
+    times = []
+    incorrect = []
+    for i in range(len(puzzles)):
+        puzzle = puzzles[i].copy()
+        start_time = time.perf_counter()
+        solution = solve(puzzle.copy())
+        end_time   = time.perf_counter()
+        times.append(round( (end_time - start_time) * 1000))
+        printPuzzle(puzzle)
+        printPuzzle(solution)
+        print(f"it took {times[i]} ms to solve puzzle #{i + 1}")
+        #commenting the above 3 lines out since our sample base is over 1 million puzzles
+        if(solution != solutions[i]):
+            incorrect.append(solution)
+    print(f"average time to complete each puzzle: {sum(times)/len(times)} ms")
+    print(f"out of the {len(puzzles)} sudokus solved {len(incorrect)} were not solved")
+    for solution in incorrect:
+        print("\nthis solution is incorrect or incomplete")
+        printPuzzle(solution)
 
 if __name__ == "__main__":
     main()
+    
