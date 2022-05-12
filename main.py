@@ -1,13 +1,20 @@
 import math
 
+'''
+/***********************************************************************************************
+ * loadData - loads puzzles from textfile                                                       *
+ *                                                                                             *
+ *    This function is used to extract puzzle data from a csv file                             *
+ *                                                                                             *
+ * INPUT:   file_name   -- String refering to the name of the file with the data               *
+ *                                                                                             *
+ * OUTPUT:  two 2d arrays containing every puzzle and solution from the data                   *
+ *                                                                                             *
+ * WARNINGS:   none                                                                            *
+ *=============================================================================================*/
+ '''
 def loadData(file_name = "data/data.csv"):
-    '''
-    function to load the puzzles from text file
-    param:
-        file_name: defaults to data/data.csv, the name of the data file
-    returns:
-        puzzles and solutions
-    '''
+
     print(f"loading puzzles from: {file_name[5:]}\n...")
     puzzles = []
     solutions = []
@@ -20,50 +27,59 @@ def loadData(file_name = "data/data.csv"):
             solutions.append(solution)
     print("Loading Complete")
     return prepData(puzzles), prepData(solutions)
+    
 '''
-function has been put away since all it really did was add extra calculations just to
-be a minor convenience for me
-def reshape(array):
-    Function that turns a linear matrix into a square matrix
-    param:
-        array, the matrix were going to reshape
-    returns:
-        square matrix
-    size = int(len(array)**(1/2))
-    matrix = []
-    prev = 0
-    for i in range(size, size * size + 1, size):
-        matrix.append(array[prev: i])
-        prev = i
-    return matrix
-'''
+/***********************************************************************************************
+ * prepData - converts the elements of a 2d array into integers                                *
+ *                                                                                             *
+ *    This function is used to turn the elements of the puzzle & solution arrays into ints     *
+ *                                                                                             *
+ * INPUT:   sudokus   -- 2d array which represents either the puzzles or solutions             *
+ *                                                                                             *
+ * OUTPUT:  result    -- 2d array with integer elements in each row                            *
+ *                                                                                             *
+ * WARNINGS:   none                                                                            *
+ *=============================================================================================*/
+ '''
 def prepData(sudokus):
-    '''
-    Function that goes through each index in an array
-    param: 
-        sudokus, the array containing all the puzzles
-    returns:
-        result, list of all the sudokus properly done
-    '''
+
     result = []
     for sudoku in sudokus:
         puzzle = [int(value) for value in sudoku]
         result.append(puzzle)
     return result
-
+'''
+/***********************************************************************************************
+ * bitScan - finds the least significant bit of a given binary number                          *
+ *                                                                                             *
+ *    This function is used to find the position of the least significant bit in a bitboard    *
+ *                                                                                             *
+ * INPUT:   bitboard   -- number representing board state                                      *
+ *                                                                                             *
+ * OUTPUT:  number which represents the position of the least significant bit                  *
+ *                                                                                             *
+ * WARNINGS:   none                                                                            *
+ *=============================================================================================*/
+ '''
 def bitScan(bitboard):
-    #given a bitboard returns the position of the least significant bit
     return bitboard & -bitboard
 
+'''
+/***********************************************************************************************
+ * getPositions - returns a list of the positions of each bit in a given bitboard              *
+ *                                                                                             *
+ *    This function is used to find the position of the least significant bit in a bitboard    *
+ *                                                                                             *
+ * INPUT:   bitboard    -- number representing board state                                     *
+ *                                                                                             *
+ * OUTPUT:  result      --number which represents the position of the least significant bit    *
+ *                                                                                             *
+ * WARNINGS:   none                                                                            *
+ *=============================================================================================*/
+ '''
+ 
 def getPositions(bitboard):
-    '''
-    Function that given a bitboard that represents the state of a sudoku returns a list of the positions
-    of the bits
-    params:
-        state: a given bit_board
-    returns:
-        result: an array of the bit positions
-    '''
+
     result = []
     #since an empty board would be exactly 2**81
     while(bitboard > 2**81):
@@ -72,12 +88,23 @@ def getPositions(bitboard):
         bitboard -= sig_bit    
     return result
 
+'''
+/***********************************************************************************************
+ * getBitboards - given an array representing a sudoku puzzle creates 9 bitboards that         *
+ *                 represent the positions for each number in the puzzle                       *
+ *    This function is used to find the position of the least significant bit in a bitboard    *
+ *                                                                                             *
+ * INPUT:   boards    -- sudoku puzzle                                                         *
+ *                                                                                             *
+ * OUTPUT:  res     -- array of bitboards that represent the positions of numbers in the puzzle*
+ *                                                                                             *
+ * WARNINGS:   none                                                                            *
+ *=============================================================================================*/
+ '''
 def getBitboards(boards):
-    '''
-    Function returns 9 bitboards representing the positions of each digit from a sudoku puzzle
-    '''
+
     #start off each bitboard with 2^81 which is a binary number that consists of
-    #81 zeroes and 1 leading 1
+    #81 zeroes and 1 leading one
     res = [2**81] * 9
     for i in range(len(res)):
         for index in boards[i]:
